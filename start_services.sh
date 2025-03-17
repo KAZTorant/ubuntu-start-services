@@ -1,23 +1,18 @@
 #!/bin/bash
+# Change to the directory where this script is located, then move up one level (to kazza)
+cd "$(dirname "$(readlink -f "$0")")/.." || exit
 
-# Log file location (in the same folder)
-LOGFILE="$(dirname "$0")/start_services.log"
-
-# Function to report an error
-report_error() {
-    echo "Error occurred: $1" >> "$LOGFILE"
-}
-
-# Navigate to the script's directory (main folder)
-cd "$(dirname "$0")" || exit
+# Set the log file (placed inside helper-ubuntu)
+LOGFILE="$(pwd)/helper-ubuntu/start_services.log"
+echo "Starting services..." > "$LOGFILE"
 
 # ---- Start Backend (Django) ----
-cd managements || exit
+cd managements || { echo "Failed to access managements directory" >> "$LOGFILE"; exit 1; }
 
-# Check if venv directory exists
+# Create virtual environment if needed
 if [ ! -d "venv" ]; then
     echo "Creating virtual environment..." >> "$LOGFILE"
-    python3 -m venv venv
+    python3 -m venv venv >> "$LOGFILE" 2>&1
 fi
 
 nohup bash -c "
@@ -28,33 +23,29 @@ nohup bash -c "
     python manage.py runserver 0.0.0.0:8000
 " >> "$LOGFILE" 2>&1 & disown
 
-# Navigate back to the main folder
 cd ..
 
 # ---- Start Frontend (Vue.js) ----
-cd frontend || exit
-
+cd frontend || { echo "Failed to access frontend directory" >> "$LOGFILE"; exit 1; }
 nohup bash -c "
     cd $(pwd) &&
     npm install &&
     npm run serve
 " >> "$LOGFILE" 2>&1 & disown
-
-# Navigate back to the main folder
 cd ..
 
 # ---- Start Printer Service ----
-cd printer-v2 || exit
-
+cd printer-v2 || { echo "Failed to access printer-v2 directory" >> "$LOGFILE"; exit 1; }
 nohup bash -c "
     cd $(pwd) &&
     npm install &&
     npm run start
 " >> "$LOGFILE" 2>&1 & disown
-
-# Navigate back to the main folder
 cd ..
 
 echo "All services started successfully!" >> "$LOGFILE"
+
+# Notify the user with a pop-up (requires zenity)
+zenity --info --title="Service Status" --text="All services are up!" &
 
 exit 0
