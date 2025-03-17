@@ -1,0 +1,8 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Start Kazza Services
+Comment=Starts backend, frontend, and printer services in the background.
+Exec=/full/path/to/Desktop/kazza/helper-ubuntu/start_services.sh
+Icon=utilities-terminal
+Terminal=false
