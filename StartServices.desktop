@@ -1,7 +1,10 @@
 [Desktop Entry]
 Type=Application
-Name=Start Services
-Comment=Starts backend, and frontend services.
+Name=Start KAZZA Services
+Comment=Starts restaurant backend and frontend services
 Exec=/home/eli/Desktop/KAZZA/ubuntu-start-services/start_services.sh
 Icon=utilities-terminal
 Terminal=true
+Categories=Development;
+StartupNotify=true
+Path=/home/eli/Desktop/KAZZA
