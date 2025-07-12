@@ -128,7 +128,7 @@ pip install gunicorn >> "$LOGFILE" 2>&1
 
 # Set environment variables
 export DB_DEFAULT=postgres
-export DJANGO_SETTINGS_MODULE=restuarant_backend.settings
+export DJANGO_SETTINGS_MODULE=config.settings
 
 update_progress "Running database migrations..." 60
 
