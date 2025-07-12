@@ -1,10 +1,13 @@
 [Desktop Entry]
+Version=1.0
 Type=Application
 Name=Start KAZZA Services
-Comment=Starts restaurant backend and frontend services
+Comment=Starts restaurant backend and frontend services in background
 Exec=/home/eli/Desktop/KAZZA/ubuntu-start-services/start_services.sh
 Icon=utilities-terminal
-Terminal=true
-Categories=Development;
-StartupNotify=true
+Terminal=false
+Categories=Development;Network;
+StartupNotify=false
+NoDisplay=false
 Path=/home/eli/Desktop/KAZZA
+X-GNOME-Autostart-enabled=true
