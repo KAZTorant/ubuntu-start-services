@@ -95,8 +95,7 @@ sleep 3
 update_progress "Ports configured. Starting backend..." 35
 
 # ---- Start Backend (Django with Gunicorn) ----
-# If Django project is in the root directory, comment out the cd line
-# cd managements || { echo "Failed to access backend directory" | tee -a "$LOGFILE"; exit 1; }
+cd restuarant_backend || { echo "Failed to access restuarant_backend directory" | tee -a "$LOGFILE"; show_notification "Error" "Failed to access restuarant_backend directory. Check log file." "error"; exit 1; }
 
 # Create virtual environment if needed
 if [ ! -d "venv" ]; then
@@ -129,7 +128,7 @@ pip install gunicorn >> "$LOGFILE" 2>&1
 
 # Set environment variables
 export DB_DEFAULT=postgres
-export DJANGO_SETTINGS_MODULE=restaurant_backend.settings
+export DJANGO_SETTINGS_MODULE=restuarant_backend.settings
 
 update_progress "Running database migrations..." 60
 
@@ -144,8 +143,8 @@ python manage.py collectstatic --noinput >> "$LOGFILE" 2>&1
 update_progress "Starting Django backend server..." 70
 
 # Start Gunicorn server
-# Adjust the module name based on your project structure (restaurant_backend.wsgi)
-nohup bash -c "gunicorn --bind 0.0.0.0:8000 --workers 3 --timeout 60 restaurant_backend.wsgi:application" >> "$LOGFILE" 2>&1 &
+# Adjust the module name based on your project structure (restuarant_backend.wsgi)
+nohup bash -c "gunicorn --bind 0.0.0.0:8000 --workers 3 --timeout 60 restuarant_backend.wsgi:application" >> "$LOGFILE" 2>&1 &
 
 # Wait a moment for backend to start
 sleep 3
