@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=Start Services
-Comment=Starts backend, printer, and frontend services.
-Exec=/home/badamdar/Desktop/KAZZA/ubuntu-start-services/start_services_new.sh
+Comment=Starts backend, and frontend services.
+Exec=/home/eli/Desktop/KAZZA/ubuntu-start-services/start_services.sh
 Icon=utilities-terminal
 Terminal=true
