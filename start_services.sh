@@ -151,6 +151,9 @@ sleep 3
 
 update_progress "Backend started! Starting frontend..." 80
 
+# Go back to the root KAZZA directory
+cd ..
+
 # ---- Start Frontend (Vue.js) ----
 cd frontend || { 
     echo "Failed to access frontend directory" | tee -a "$LOGFILE"
