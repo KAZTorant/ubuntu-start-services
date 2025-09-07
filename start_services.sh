@@ -1,4 +1,10 @@
 #!/bin/bash
+# Load nvm for GUI-launched apps
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+# Ensure npm/node is in PATH
+export PATH="$NVM_DIR/versions/node/$(nvm version)/bin:$PATH"
 
 # Change to the directory where this script is located, then move up one level (to kazza)
 cd "$(dirname "$(readlink -f "$0")")/.." || exit
