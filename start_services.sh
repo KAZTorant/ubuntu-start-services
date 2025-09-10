@@ -14,7 +14,7 @@ LOGFILE="$(pwd)/ubuntu-start-services/start_services.log"
 echo "$(date): Starting services..." | tee "$LOGFILE"
 
 # Progress bar setup
-PROGRESS_PIPE="/tmp/kazza_progress_$"
+PROGRESS_PIPE="/tmp/kazza_progress_$$"
 mkfifo "$PROGRESS_PIPE"
 
 # Function to initialize progress dialog
@@ -101,10 +101,10 @@ init_progress
 update_progress "Starting KAZZA Services..." 5
 
 # ---- Handle ports without sudo ----
-# Define ports
+# Define ports (added 8080 for frontend, bot runs on different process)
 PORTS=(8000 8080)
 
-update_progress "Checking and managing ports..." 10
+update_progress "Checking and managing ports..." 8
 
 # Loop through each port and kill processes using them (no sudo needed)
 for port in "${PORTS[@]}"; do
@@ -122,7 +122,7 @@ for port in "${PORTS[@]}"; do
     fi
 done
 
-update_progress "Ports configured, accessing backend..." 15
+update_progress "Ports configured, accessing backend..." 12
 
 # ---- Start Backend (Django with Gunicorn) ----
 cd restuarant_backend || { 
@@ -132,12 +132,12 @@ cd restuarant_backend || {
     exit 1
 }
 
-update_progress "Setting up Python environment..." 20
+update_progress "Setting up Python environment..." 15
 
 # Create virtual environment if needed
 if [ ! -d "venv" ]; then
     log_message "Creating virtual environment with Python 3.12..."
-    update_progress "Creating Python virtual environment..." 25
+    update_progress "Creating Python virtual environment..." 20
     python3.12 -m venv venv >> "$LOGFILE" 2>&1
     if [ $? -ne 0 ]; then
         # Try with python3 if python3.12 is not available
@@ -160,7 +160,7 @@ if [ ! -f "venv/bin/activate" ]; then
     exit 1
 fi
 
-update_progress "Installing backend dependencies..." 35
+update_progress "Installing backend dependencies..." 25
 
 source venv/bin/activate
 
@@ -172,7 +172,7 @@ pip install gunicorn >> "$LOGFILE" 2>&1
 export DB_DEFAULT=postgres
 export DJANGO_SETTINGS_MODULE=config.settings
 
-update_progress "Running database migrations..." 50
+update_progress "Running database migrations..." 35
 
 # Run migrations
 python manage.py migrate >> "$LOGFILE" 2>&1
@@ -183,7 +183,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-update_progress "Collecting static files..." 60
+update_progress "Collecting static files..." 45
 
 # Collect static files (important for production)
 python manage.py collectstatic --noinput >> "$LOGFILE" 2>&1
@@ -194,7 +194,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-update_progress "Starting Django backend server..." 70
+update_progress "Starting Django backend server..." 55
 
 # Start Gunicorn server in background
 nohup gunicorn --bind 0.0.0.0:8000 --workers 3 --timeout 60 config.wsgi:application >> "$LOGFILE" 2>&1 &
@@ -214,7 +214,30 @@ if ! kill -0 "$BACKEND_PID" 2>/dev/null; then
     exit 1
 fi
 
-update_progress "Backend started! Verifying connection..." 75
+update_progress "Backend started! Starting Telegram Bot..." 60
+
+# ---- Start Telegram Bot ----
+log_message "Starting Telegram Bot..."
+
+# Start Telegram Bot in background (same virtual environment)
+nohup python manage.py run_telegram_bot >> "$LOGFILE" 2>&1 &
+BOT_PID=$!
+
+# Save BOT PID for later reference
+echo "$BOT_PID" > ../ubuntu-start-services/telegram_bot.pid
+
+# Wait a moment for bot to initialize
+sleep 3
+
+# Check if bot is running
+if ! kill -0 "$BOT_PID" 2>/dev/null; then
+    log_message "WARNING: Telegram Bot may have failed to start (check TELEGRAM_BOT_TOKEN in settings)"
+    # Don't exit here as bot might be optional
+else
+    log_message "Telegram Bot started successfully with PID: $BOT_PID"
+fi
+
+update_progress "Telegram Bot started! Verifying backend connection..." 65
 
 # Test if backend is responding (with timeout)
 if timeout 10 curl -s http://localhost:8000 >/dev/null 2>&1; then
@@ -223,7 +246,7 @@ else
     log_message "WARNING: Backend may not be fully ready yet"
 fi
 
-update_progress "Backend ready! Starting frontend..." 80
+update_progress "Backend ready! Starting frontend..." 70
 
 # Go back to the root KAZZA directory
 cd ..
@@ -236,7 +259,7 @@ cd frontend || {
     exit 1
 }
 
-update_progress "Setting up frontend environment..." 85
+update_progress "Setting up frontend environment..." 75
 
 # Install dependencies
 npm install >> "$LOGFILE" 2>&1
@@ -247,7 +270,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-update_progress "Starting Vue.js development server..." 90
+update_progress "Starting Vue.js development server..." 85
 
 # Start frontend in background
 nohup npm run serve >> "$LOGFILE" 2>&1 &
@@ -279,18 +302,21 @@ update_progress "All services started successfully!" 100
 log_message "All services started successfully!"
 log_message "Backend running on: http://localhost:8000"
 log_message "Frontend running on: http://localhost:8080"
+log_message "Telegram Bot running with PID: $BOT_PID"
 log_message "Backend PID: $BACKEND_PID"
 log_message "Frontend PID: $FRONTEND_PID"
 
-# Create a simple status file
+# Create a comprehensive status file
 cat > ubuntu-start-services/status.txt << EOF
 KAZZA Services Status
 ====================
 Started: $(date)
 Backend PID: $BACKEND_PID
 Frontend PID: $FRONTEND_PID
+Telegram Bot PID: $BOT_PID
 Backend URL: http://localhost:8000
 Frontend URL: http://localhost:8080
+Telegram Bot: Active
 Log File: $LOGFILE
 EOF
 
@@ -305,6 +331,7 @@ show_notification "KAZZA Xidmətləri Uğurla Başladıldı! 🎉" "✅ Bütün 
 
 🔧 Backend: http://localhost:8000
 🎨 Frontend: http://localhost:8080
+🤖 Telegram Bot: Aktiv
 
 Xidmətlər arxa planda işləyir.
 Ətraflı məlumat üçün status faylını yoxlayın." "normal" 30000
