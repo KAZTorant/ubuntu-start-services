@@ -101,8 +101,8 @@ init_progress
 update_progress "Starting KAZZA Services..." 5
 
 # ---- Handle ports without sudo ----
-# Define ports (added 8080 for frontend, bot runs on different process)
-PORTS=(8000 8080)
+# Define ports (backend 8005, frontend 8085)
+PORTS=(8005 8085)
 
 update_progress "Checking and managing ports..." 8
 
@@ -196,8 +196,8 @@ fi
 
 update_progress "Starting Django backend server..." 55
 
-# Start Gunicorn server in background
-nohup gunicorn --bind 0.0.0.0:8000 --workers 3 --timeout 60 config.wsgi:application >> "$LOGFILE" 2>&1 &
+# Start Gunicorn server in background (bind to port 8005)
+nohup gunicorn --bind 0.0.0.0:8005 --workers 3 --timeout 60 config.wsgi:application >> "$LOGFILE" 2>&1 &
 BACKEND_PID=$!
 
 # Save PIDs for later reference
@@ -240,8 +240,8 @@ fi
 update_progress "Telegram Bot started! Verifying backend connection..." 65
 
 # Test if backend is responding (with timeout)
-if timeout 10 curl -s http://localhost:8000 >/dev/null 2>&1; then
-    log_message "Backend is responding on port 8000"
+if timeout 10 curl -s http://localhost:8005 >/dev/null 2>&1; then
+    log_message "Backend is responding on port 8005"
 else
     log_message "WARNING: Backend may not be fully ready yet"
 fi
@@ -272,8 +272,8 @@ fi
 
 update_progress "Starting Vue.js development server..." 85
 
-# Start frontend in background
-nohup npm run serve >> "$LOGFILE" 2>&1 &
+# Start frontend in background (force port 8085)
+PORT=8085 nohup npm run serve >> "$LOGFILE" 2>&1 &
 FRONTEND_PID=$!
 
 # Save PIDs for later reference
@@ -300,8 +300,8 @@ sleep 3
 update_progress "All services started successfully!" 100
 
 log_message "All services started successfully!"
-log_message "Backend running on: http://localhost:8000"
-log_message "Frontend running on: http://localhost:8080"
+log_message "Backend running on: http://localhost:8005"
+log_message "Frontend running on: http://localhost:8085"
 log_message "Telegram Bot running with PID: $BOT_PID"
 log_message "Backend PID: $BACKEND_PID"
 log_message "Frontend PID: $FRONTEND_PID"
@@ -314,8 +314,8 @@ Started: $(date)
 Backend PID: $BACKEND_PID
 Frontend PID: $FRONTEND_PID
 Telegram Bot PID: $BOT_PID
-Backend URL: http://localhost:8000
-Frontend URL: http://localhost:8080
+Backend URL: http://localhost:8005
+Frontend URL: http://localhost:8085
 Telegram Bot: Active
 Log File: $LOGFILE
 EOF
@@ -329,8 +329,8 @@ close_progress
 # Show final success notification that stays longer
 show_notification "KAZZA Xidmətləri Uğurla Başladıldı! 🎉" "✅ Bütün xidmətlər indi işləyir:
 
-🔧 Backend: http://localhost:8000
-🎨 Frontend: http://localhost:8080
+🔧 Backend: http://localhost:8005
+🎨 Frontend: http://localhost:8085
 🤖 Telegram Bot: Aktiv
 
 Xidmətlər arxa planda işləyir.
