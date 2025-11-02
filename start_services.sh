@@ -170,6 +170,7 @@ pip install gunicorn >> "$LOGFILE" 2>&1
 
 # Set environment variables
 export DB_DEFAULT=postgres
+export BACKEND_PORT=8005
 export DJANGO_SETTINGS_MODULE=config.settings
 
 update_progress "Running database migrations..." 35
