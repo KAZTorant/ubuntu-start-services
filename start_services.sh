@@ -274,7 +274,8 @@ fi
 update_progress "Starting Vue.js development server..." 85
 
 # Start frontend in background (force port 8085)
-PORT=8085 nohup npm run serve >> "$LOGFILE" 2>&1 &
+# Use bash -c to ensure nvm environment is available
+nohup bash -c "export NVM_DIR=\"$HOME/.nvm\"; [ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\"; export PATH=\"\$NVM_DIR/versions/node/\$(nvm version)/bin:\$PATH\"; PORT=8085 npm run serve" >> "$LOGFILE" 2>&1 &
 FRONTEND_PID=$!
 
 # Save PIDs for later reference
