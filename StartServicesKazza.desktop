@@ -3,12 +3,11 @@ Version=1.0
 Type=Application
 Name=Start KAZZA Services
 Comment=Starts restaurant backend and frontend services in background
-Exec=bash -c "bash ~/Desktop/KAZZA/ubuntu-start-services/start_services.sh"
-Icon=~/Desktop/KAZZA/ubuntu-start-services/kazza-icon.svg
+Exec=bash /home/USERNAME/Desktop/KAZZA/ubuntu-start-services/start_services.sh
+Icon=utilities-terminal
 Terminal=false
 Categories=Development;Network;
 StartupNotify=false
 NoDisplay=false
-Path=
+Path=/home/USERNAME/Desktop/KAZZA
 Encoding=UTF-8
-
