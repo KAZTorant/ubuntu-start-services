@@ -43,10 +43,25 @@ if command -v update-desktop-database >/dev/null 2>&1; then
     update-desktop-database "$USER_HOME/.local/share/applications" 2>/dev/null || true
 fi
 
+# Also copy to Desktop home screen
+if [ -d "$USER_HOME/Desktop" ]; then
+    echo "🖥️  Desktop ekranına əlavə edilir..."
+    cp "$USER_HOME/.local/share/applications/StartServicesKazza.desktop" "$USER_HOME/Desktop/"
+    chmod +x "$USER_HOME/Desktop/StartServicesKazza.desktop"
+    
+    # Trust the desktop file on Desktop too
+    if command -v gio >/dev/null 2>&1; then
+        gio set "$USER_HOME/Desktop/StartServicesKazza.desktop" metadata::trusted true 2>/dev/null || true
+    fi
+fi
+
 echo ""
 echo "✅ Desktop faylı uğurla quraşdırıldı!"
-echo "📱 İndi tətbiq menyusunda 'Sistemi başlat' tapa bilərsiniz"
-echo "🖱️  Xidmətləri işə salmaq üçün üzərinə 2 dəfə klikləyin"
+echo "📱 Tətbiq menyusunda: 'Sistemi başlat'"
+echo "🖥️  Desktop ekranında: 'Sistemi başlat' ikonu"
+echo "🖱️  İkonu 2 dəfə klikləyərək xidmətləri işə salın"
 echo ""
-echo "📂 Quraşdırıldı: $USER_HOME/.local/share/applications/StartServicesKazza.desktop"
+echo "📂 Quraşdırıldı:"
+echo "   - $USER_HOME/.local/share/applications/StartServicesKazza.desktop"
+echo "   - $USER_HOME/Desktop/StartServicesKazza.desktop"
 
