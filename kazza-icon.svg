@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="60" fill="#4A90E2" stroke="#2E5C8A" stroke-width="2"/>
+  
+  <!-- Play/Start triangle -->
+  <path d="M 50 40 L 50 88 L 88 64 Z" fill="#FFFFFF"/>
+  
+  <!-- Service dots/symbols -->
+  <circle cx="64" cy="30" r="4" fill="#FFFFFF" opacity="0.8"/>
+  <circle cx="64" cy="98" r="4" fill="#FFFFFF" opacity="0.8"/>
+  <circle cx="30" cy="64" r="4" fill="#FFFFFF" opacity="0.8"/>
+  <circle cx="98" cy="64" r="4" fill="#FFFFFF" opacity="0.8"/>
+</svg>
