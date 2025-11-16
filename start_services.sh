@@ -221,30 +221,25 @@ if ! kill -0 "$BACKEND_PID" 2>/dev/null; then
     exit 1
 fi
 
-update_progress "Backend started! Starting Telegram Bot..." 60
+update_progress "Backend started! Verifying backend connection..." 60
 
-# ---- Start Telegram Bot ----
-log_message "Starting Telegram Bot..."
+# ---- Start Telegram Bot ---- (DISABLED)
+# Uncomment the lines below to enable Telegram Bot
+# log_message "Starting Telegram Bot..."
+# nohup python manage.py run_telegram_bot >> "$LOGFILE" 2>&1 &
+# BOT_PID=$!
+# echo "$BOT_PID" > ../ubuntu-start-services/telegram_bot.pid
+# sleep 3
+# if ! kill -0 "$BOT_PID" 2>/dev/null; then
+#     log_message "WARNING: Telegram Bot may have failed to start"
+# else
+#     log_message "Telegram Bot started successfully with PID: $BOT_PID"
+# fi
 
-# Start Telegram Bot in background (same virtual environment)
-nohup python manage.py run_telegram_bot >> "$LOGFILE" 2>&1 &
-BOT_PID=$!
+BOT_PID=""
+log_message "Telegram Bot is disabled"
 
-# Save BOT PID for later reference
-echo "$BOT_PID" > ../ubuntu-start-services/telegram_bot.pid
-
-# Wait a moment for bot to initialize
-sleep 3
-
-# Check if bot is running
-if ! kill -0 "$BOT_PID" 2>/dev/null; then
-    log_message "WARNING: Telegram Bot may have failed to start (check TELEGRAM_BOT_TOKEN in settings)"
-    # Don't exit here as bot might be optional
-else
-    log_message "Telegram Bot started successfully with PID: $BOT_PID"
-fi
-
-update_progress "Telegram Bot started! Verifying backend connection..." 65
+update_progress "Verifying backend connection..." 65
 
 # Test if backend is responding (with timeout)
 if timeout 10 curl -s http://localhost:8005 >/dev/null 2>&1; then
@@ -319,7 +314,6 @@ update_progress "All services started successfully!" 100
 log_message "All services started successfully!"
 log_message "Backend running on: http://localhost:8005"
 log_message "Frontend running on: http://localhost:8085"
-log_message "Telegram Bot running with PID: $BOT_PID"
 log_message "Backend PID: $BACKEND_PID"
 log_message "Frontend PID: $FRONTEND_PID"
 
@@ -330,10 +324,8 @@ KAZZA Services Status
 Started: $(date)
 Backend PID: $BACKEND_PID
 Frontend PID: $FRONTEND_PID
-Telegram Bot PID: $BOT_PID
 Backend URL: http://localhost:8005
 Frontend URL: http://localhost:8085
-Telegram Bot: Active
 Log File: $LOGFILE
 EOF
 
@@ -344,11 +336,10 @@ sleep 2
 close_progress
 
 # Show final success notification that stays longer
-show_notification "KAZZA Xidmətləri Uğurla Başladıldı! 🎉" "✅ Bütün xidmətlər indi işləyir:
+show_notification "KAZZA Xidmətləri Uğurla Başladıldı! 🎉" "✅ Xidmətlər indi işləyir:
 
 🔧 Backend: http://localhost:8005
 🎨 Frontend: http://localhost:8085
-🤖 Telegram Bot: Aktiv
 
 Xidmətlər arxa planda işləyir.
 Ətraflı məlumat üçün status faylını yoxlayın." "normal" 30000
