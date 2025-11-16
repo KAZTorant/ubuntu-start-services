@@ -7,7 +7,7 @@ set -e  # Exit on error
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 USER_HOME="$HOME"
 
-echo "🔧 Installing KAZZA Services desktop file..."
+echo "🔧 KAZZA xidmətlərinin desktop faylı quraşdırılır..."
 
 # Check if start_services.sh exists in the same directory
 if [ ! -f "$SCRIPT_DIR/start_services.sh" ]; then
@@ -44,9 +44,9 @@ if command -v update-desktop-database >/dev/null 2>&1; then
 fi
 
 echo ""
-echo "✅ Desktop file installed successfully!"
-echo "📱 You can now find 'Start KAZZA Services' in your applications menu"
-echo "🖱️  Double-click it to start the services"
+echo "✅ Desktop faylı uğurla quraşdırıldı!"
+echo "📱 İndi tətbiq menyusunda 'Sistemi başlat' tapa bilərsiniz"
+echo "🖱️  Xidmətləri işə salmaq üçün üzərinə 2 dəfə klikləyin"
 echo ""
-echo "📂 Installed to: $USER_HOME/.local/share/applications/StartServicesKazza.desktop"
+echo "📂 Quraşdırıldı: $USER_HOME/.local/share/applications/StartServicesKazza.desktop"
 
