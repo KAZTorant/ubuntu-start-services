@@ -1,10 +1,11 @@
 #!/bin/bash
 # Load nvm for GUI-launched apps
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-
-# Ensure npm/node is in PATH
-export PATH="$NVM_DIR/versions/node/$(nvm version)/bin:$PATH"
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+    \. "$NVM_DIR/nvm.sh"
+    # Ensure npm/node is in PATH
+    export PATH="$NVM_DIR/versions/node/$(nvm version)/bin:$PATH"
+fi
 
 # Change to the directory where this script is located, then move up one level (to kazza)
 cd "$(dirname "$(readlink -f "$0")")/.." || exit
@@ -164,9 +165,14 @@ update_progress "Installing backend dependencies..." 25
 
 source venv/bin/activate
 
-# Install/upgrade requirements including gunicorn
-pip install -r requirements.txt >> "$LOGFILE" 2>&1
-pip install gunicorn >> "$LOGFILE" 2>&1
+# Install/upgrade requirements including gunicorn (only if needed)
+if ! pip list | grep -q gunicorn; then
+    log_message "Installing Python dependencies..."
+    pip install -r requirements.txt >> "$LOGFILE" 2>&1
+    pip install gunicorn >> "$LOGFILE" 2>&1
+else
+    log_message "Python dependencies already installed"
+fi
 
 # Set environment variables
 export DB_DEFAULT=postgres
@@ -262,60 +268,45 @@ cd frontend || {
 
 update_progress "Setting up frontend environment..." 75
 
-# Install dependencies
-npm install >> "$LOGFILE" 2>&1
-if [ $? -ne 0 ]; then
-    log_message "ERROR: Frontend npm install failed"
-    close_progress
-    show_notification "KAZZA Error" "Frontend dependencies installation failed" "critical" 15000
-    exit 1
+# Install dependencies (only if node_modules doesn't exist)
+if [ ! -d "node_modules" ]; then
+    log_message "Installing frontend dependencies..."
+    npm install >> "$LOGFILE" 2>&1
+    if [ $? -ne 0 ]; then
+        log_message "ERROR: Frontend npm install failed"
+        close_progress
+        show_notification "KAZZA Error" "Frontend dependencies installation failed" "critical" 15000
+        exit 1
+    fi
+else
+    log_message "Frontend dependencies already installed"
 fi
 
 update_progress "Starting Vue.js development server..." 85
 
-# Get current directory for frontend
-FRONTEND_DIR="$(pwd)"
+# Start frontend in background with proper detachment
+PORT=8085 setsid npm run serve >> "$LOGFILE" 2>&1 </dev/null &
 
-# Create a temporary startup script for frontend to ensure it stays alive
-cat > ../ubuntu-start-services/start_frontend_temp.sh << 'EOFSCRIPT'
-#!/bin/bash
-# Load nvm
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-export PATH="$NVM_DIR/versions/node/$(nvm version)/bin:$PATH"
+# Save the shell PID temporarily
+SHELL_PID=$!
 
-# Change to frontend directory
-cd "FRONTEND_DIR_PLACEHOLDER"
-
-# Start npm serve
-exec npm run serve --port 8085 >> "LOGFILE_PLACEHOLDER" 2>&1
-EOFSCRIPT
-
-# Replace placeholders
-sed -i "s|FRONTEND_DIR_PLACEHOLDER|$FRONTEND_DIR|g" ../ubuntu-start-services/start_frontend_temp.sh
-sed -i "s|LOGFILE_PLACEHOLDER|$LOGFILE|g" ../ubuntu-start-services/start_frontend_temp.sh
-
-# Make it executable
-chmod +x ../ubuntu-start-services/start_frontend_temp.sh
-
-# Start frontend using the wrapper script with nohup
-nohup ../ubuntu-start-services/start_frontend_temp.sh >/dev/null 2>&1 &
-FRONTEND_PID=$!
-
-# Save PIDs for later reference
-echo "$FRONTEND_PID" > ../ubuntu-start-services/frontend.pid
+# Disown from current shell to prevent SIGHUP
+disown
 
 cd ..
 
-# Wait a moment for frontend to start
-sleep 5
+# Wait for npm to actually start and bind to port
+sleep 8
 
-# Check if frontend is running
-if ! kill -0 "$FRONTEND_PID" 2>/dev/null; then
-    log_message "ERROR: Frontend failed to start"
-    close_progress
-    show_notification "KAZZA Error" "Frontend failed to start" "critical" 15000
-    exit 1
+# Get the actual npm/node process PID from port
+FRONTEND_PID=$(lsof -ti :8085 2>/dev/null | head -1)
+
+if [ -n "$FRONTEND_PID" ]; then
+    log_message "Frontend started successfully with PID: $FRONTEND_PID"
+    echo "$FRONTEND_PID" > ubuntu-start-services/frontend.pid
+else
+    log_message "WARNING: Frontend process not detected on port 8085 yet"
+    echo "$SHELL_PID" > ubuntu-start-services/frontend.pid
 fi
 
 update_progress "Services initializing... Almost ready!" 95

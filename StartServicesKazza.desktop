@@ -4,4 +4,4 @@ Name=Sistemi başlat
 Comment=Backend, printer və frontend xidmətlərini işə salır
 Exec=/home/USERNAME/Desktop/KazzaNew/ubuntu-start-services/start_services.sh
 Icon=/home/USERNAME/Desktop/KazzaNew/ubuntu-start-services/kazza-icon.svg
-Terminal=true
+Terminal=false
