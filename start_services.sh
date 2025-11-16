@@ -273,39 +273,49 @@ fi
 
 update_progress "Starting Vue.js development server..." 85
 
-# Start frontend in background (force port 8085)
-# Use setsid + nohup to fully detach from terminal session
-setsid bash -c "
-    export NVM_DIR=\"$HOME/.nvm\"
-    [ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\"
-    export PATH=\"\$NVM_DIR/versions/node/\$(nvm version)/bin:\$PATH\"
-    cd \"$(pwd)\"
-    nohup npm run serve --port 8085 >> \"$LOGFILE\" 2>&1 &
-    echo \$! > \"$(pwd)/../ubuntu-start-services/frontend.pid\"
-" > /dev/null 2>&1 &
+# Get current directory for frontend
+FRONTEND_DIR="$(pwd)"
+
+# Create a temporary startup script for frontend to ensure it stays alive
+cat > ../ubuntu-start-services/start_frontend_temp.sh << 'EOFSCRIPT'
+#!/bin/bash
+# Load nvm
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+export PATH="$NVM_DIR/versions/node/$(nvm version)/bin:$PATH"
+
+# Change to frontend directory
+cd "FRONTEND_DIR_PLACEHOLDER"
+
+# Start npm serve
+exec npm run serve --port 8085 >> "LOGFILE_PLACEHOLDER" 2>&1
+EOFSCRIPT
+
+# Replace placeholders
+sed -i "s|FRONTEND_DIR_PLACEHOLDER|$FRONTEND_DIR|g" ../ubuntu-start-services/start_frontend_temp.sh
+sed -i "s|LOGFILE_PLACEHOLDER|$LOGFILE|g" ../ubuntu-start-services/start_frontend_temp.sh
+
+# Make it executable
+chmod +x ../ubuntu-start-services/start_frontend_temp.sh
+
+# Start frontend using the wrapper script with nohup
+nohup ../ubuntu-start-services/start_frontend_temp.sh >/dev/null 2>&1 &
+FRONTEND_PID=$!
+
+# Save PIDs for later reference
+echo "$FRONTEND_PID" > ../ubuntu-start-services/frontend.pid
 
 cd ..
 
 # Wait a moment for frontend to start
-sleep 8
+sleep 5
 
-# Get the PID from the file (actual npm process)
-if [ -f "ubuntu-start-services/frontend.pid" ]; then
-    FRONTEND_PID=$(cat ubuntu-start-services/frontend.pid)
-else
-    FRONTEND_PID=""
-fi
-
-# Check if frontend is running by checking the port
-sleep 2
-FRONTEND_CHECK=$(lsof -ti :8085 2>/dev/null)
-
-if [ -z "$FRONTEND_CHECK" ]; then
-    log_message "WARNING: Frontend may not have started on port 8085"
-    # Don't exit, let it continue and check later
-else
-    log_message "Frontend process detected on port 8085"
-    FRONTEND_PID=$FRONTEND_CHECK
+# Check if frontend is running
+if ! kill -0 "$FRONTEND_PID" 2>/dev/null; then
+    log_message "ERROR: Frontend failed to start"
+    close_progress
+    show_notification "KAZZA Error" "Frontend failed to start" "critical" 15000
+    exit 1
 fi
 
 update_progress "Services initializing... Almost ready!" 95
